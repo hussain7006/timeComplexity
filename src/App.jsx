@@ -130,10 +130,10 @@ function App() {
               fontWeight: 'bold',
               color: 'darkgray'
             }}>
-              Select A Number
+              Select a Number
             </label>
 
-            <input type="text"
+            <input type="number"
               style={{
                 border: "1px solid black",
                 borderRadius: "5px",
