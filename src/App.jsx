@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import './App.css'
 import { useEffect } from 'react'
+import Swal from 'sweetalert2'
 
 function App() {
 
@@ -68,8 +69,28 @@ function App() {
 
   const handleSearch = () => {
 
+    setAlgorithms((prevAlgorithms) => {
+      return prevAlgorithms.map((algorithm) => {
+        return {
+          ...algorithm,
+          timeComplexity: "N/A",
+        };
+      });
+    });
+
     // if (numbers.length < 1) return alert('Please provide a input string')
-    if (findingIndex == null) return alert('Please provide a number to find')
+    if (!findingIndex) {
+
+      Swal.fire({
+        icon: "info",
+        title: "Info",
+        text: "Please provide a number to find!",
+      });
+
+      return
+    }
+
+
     const algorithmObject = algorithms.reduce((acc, { label, checked }) => {
       acc[label] = checked;
       return acc;
@@ -82,6 +103,111 @@ function App() {
       ...algorithmObject
     }
     console.log(data);
+
+
+
+
+    const allUnchecked = algorithms.every((algorithm) => !algorithm.checked);
+
+    if (allUnchecked) {
+      Swal.fire({
+        icon: "info",
+        title: "Info",
+        text: "Please check at least one algorithm!",
+      });
+      return
+    }
+
+
+    fetch("https://a605-2406-d00-cccf-7fd1-30f1-f42e-91c7-1b7b.ngrok-free.app", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(responseData => {
+        console.log('Response from server:', responseData);
+
+        if (
+          (responseData.binary.index == -1) &&
+          (responseData.jump.index == -1) &&
+          (responseData.linear.index == -1) &&
+          (responseData.ternary.index == -1)
+        ) {
+          Swal.fire({
+            icon: "error",
+            title: "Oops...",
+            text: "Your selected number not found!",
+          });
+
+        } else {
+
+          if (responseData.binary.index != -1) {
+            setAlgorithms((prevAlgorithms) => {
+              return prevAlgorithms.map((algorithm) => {
+                if (algorithm.label === 'Binary Search') {
+                  return {
+                    ...algorithm,
+                    timeComplexity: responseData.binary.searching_time.toFixed(2) + " µs",
+                  };
+                }
+                return algorithm;
+              });
+            });
+          }
+          if (responseData.jump.index != -1) {
+            setAlgorithms((prevAlgorithms) => {
+              return prevAlgorithms.map((algorithm) => {
+                if (algorithm.label === 'Jump Search') {
+                  return {
+                    ...algorithm,
+                    timeComplexity: responseData.jump.searching_time.toFixed(2) + " µs",
+                  };
+                }
+                return algorithm;
+              });
+            });
+          }
+          if (responseData.linear.index != -1) {
+            setAlgorithms((prevAlgorithms) => {
+              return prevAlgorithms.map((algorithm) => {
+                if (algorithm.label === 'Linear Search') {
+                  return {
+                    ...algorithm,
+                    timeComplexity: responseData.linear.searching_time.toFixed(2) + " µs",
+                  };
+                }
+                return algorithm;
+              });
+            });
+          }
+          if (responseData.ternary.index != -1) {
+            setAlgorithms((prevAlgorithms) => {
+              return prevAlgorithms.map((algorithm) => {
+                if (algorithm.label === 'Ternary Search') {
+                  return {
+                    ...algorithm,
+                    timeComplexity: responseData.ternary.searching_time.toFixed(2) + " µs",
+                  };
+                }
+                return algorithm;
+              });
+            });
+          }
+        }
+
+
+      })
+      .catch(error => {
+        console.error('Error sending data:', error);
+      });
 
   }
 
@@ -111,9 +237,9 @@ function App() {
               // placeholder="Type numbers separated by commas"
               className='border border-slate-800 rounded p-3' />
 
-            <span className='text-xs text-red-500 font-bold'>
+            {/* <span className='text-xs text-red-500 font-bold'>
               Note: Input string should be comma seperated
-            </span>
+            </span> */}
           </div>
 
           <div
@@ -181,7 +307,7 @@ function App() {
                   />
 
                   <div className='flex gap-4'>
-                    <span className='text-sm'>Time Complexity:</span>
+                    <label >Time Elapsed:</label>
                     <span className='text-sm font-bold'>{item.timeComplexity}</span>
                   </div>
                 </div>
